@@ -40,6 +40,11 @@ namespace Project2015To2017
 
             definition.ConditionalPropertyGroups = propertyGroups.Where(x => x.Attribute("Condition") != null).ToArray();
 
+            foreach (var conditionalPropertyGroup in definition.ConditionalPropertyGroups)
+            {
+                conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("CodeContracts")).Remove();
+            }
+
             if (definition.Type == ApplicationType.Unknown)
             {
                 throw new NotSupportedException("Unable to parse output type.");
