@@ -43,6 +43,7 @@ namespace Project2015To2017
             foreach (var conditionalPropertyGroup in definition.ConditionalPropertyGroups)
             {
                 conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("CodeContracts")).Remove();
+                conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("DocumentationFile")).Remove();
             }
 
             if (definition.Type == ApplicationType.Unknown)
