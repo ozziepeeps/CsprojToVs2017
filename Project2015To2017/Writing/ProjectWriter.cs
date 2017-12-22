@@ -166,8 +166,12 @@ namespace Project2015To2017.Writing
                     break;
             }
 
-            AddAssemblyAttributeNodes(mainPropertyGroup, project.AssemblyAttributes);
             AddPackageNodes(mainPropertyGroup, project.PackageConfiguration, project.AssemblyAttributes);
+
+            mainPropertyGroup.Add(new XElement("AllowedOutputExtensionsInPackageBuildOutputFolder", "$(AllowedOutputExtensionsInPackageBuildOutputFolder).pdb;")); // Pack PDBs
+            mainPropertyGroup.Add(new XElement("GeneratePackageOnBuild", "true"));
+            mainPropertyGroup.Add(new XElement("Version", project.AssemblyAttributes.InformationalVersion));
+            mainPropertyGroup.Add(new XElement("DocumentationFile", @"bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml"));
 
             return mainPropertyGroup;
         }
@@ -194,41 +198,6 @@ namespace Project2015To2017.Writing
             if (packageConfiguration.RequiresLicenseAcceptance)
             {
                 mainPropertyGroup.Add(new XElement("PackageRequireLicenseAcceptance", "true"));
-            }
-        }
-
-        private void AddAssemblyAttributeNodes(XElement mainPropertyGroup, AssemblyAttributes assemblyAttributes)
-        {
-            if (assemblyAttributes == null)
-            {
-                return;
-            }
-
-            var attributes = new[]
-            {
-                new KeyValuePair<string, string>("GenerateAssemblyTitleAttribute", assemblyAttributes.Title),
-                new KeyValuePair<string, string>("GenerateAssemblyCompanyAttribute", assemblyAttributes.Company),
-                new KeyValuePair<string, string>("GenerateAssemblyDescriptionAttribute", assemblyAttributes.Description),
-                new KeyValuePair<string, string>("GenerateAssemblyProductAttribute", assemblyAttributes.Product),
-                new KeyValuePair<string, string>("GenerateAssemblyCopyrightAttribute", assemblyAttributes.Copyright),
-                new KeyValuePair<string, string>("GenerateAssemblyInformationalVersionAttribute", assemblyAttributes.InformationalVersion),
-                new KeyValuePair<string, string>("GenerateAssemblyVersionAttribute", assemblyAttributes.Version),
-                new KeyValuePair<string, string>("GenerateAssemblyFileVersionAttribute", assemblyAttributes.FileVersion),
-                new KeyValuePair<string, string>("GenerateAssemblyConfigurationAttribute", assemblyAttributes.Configuration)
-            };
-
-            var childNodes = attributes
-                .Where(x => !string.IsNullOrWhiteSpace(x.Value))
-                .Select(x => new XElement(x.Key, "false"))
-                .ToArray();
-
-            if (childNodes.Length == 0)
-            {
-                mainPropertyGroup.Add(new XElement("GenerateAssemblyInfo", "false"));
-            }
-            else
-            {
-                mainPropertyGroup.Add(childNodes);
             }
         }
 
