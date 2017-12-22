@@ -277,7 +277,7 @@ namespace Project2015To2017Tests
 		}
 
         [TestMethod]
-        public async Task RemovesConditionalCodeContractsAndDocumentationFilesAsync()
+        public async Task CoStarTransformationsAsync()
         {
             var xml = @"
 <Project DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"" ToolsVersion=""4.0"">
@@ -393,7 +393,6 @@ namespace Project2015To2017Tests
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
     <CodeContractsReferenceAssembly>Build</CodeContractsReferenceAssembly>
     <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
-    <DocumentationFile>bin\Release\CoStar.Scribe.XML</DocumentationFile>
   </PropertyGroup>
 </Project>";
 
@@ -401,6 +400,8 @@ namespace Project2015To2017Tests
 
             Assert.AreEqual(0, project.ConditionalPropertyGroups.Descendants().Count(e => e.Name.LocalName.Contains("CodeContracts")));
             Assert.AreEqual(0, project.ConditionalPropertyGroups.Descendants().Count(e => e.Name.LocalName.Contains("DocumentationFile")));
+            Assert.AreEqual(0, project.ConditionalPropertyGroups.Descendants().Count(e => e.Name.LocalName.Contains("OutputPath")));
+            Assert.AreEqual(0, project.ConditionalPropertyGroups.Descendants().Count(e => e.Name.LocalName.Contains("Optimize")));
         }
 
         private static async Task<Project> ParseAndTransformAsync(string xml)

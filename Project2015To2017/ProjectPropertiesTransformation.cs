@@ -40,10 +40,13 @@ namespace Project2015To2017
 
             definition.ConditionalPropertyGroups = propertyGroups.Where(x => x.Attribute("Condition") != null).ToArray();
 
+            // Custom CoStar modifications - remove all of these nodes from the conditional (debug/release) PropertyGroups.
             foreach (var conditionalPropertyGroup in definition.ConditionalPropertyGroups)
             {
                 conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("CodeContracts")).Remove();
                 conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("DocumentationFile")).Remove();
+                conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("OutputPath")).Remove();
+                conditionalPropertyGroup.Elements().Where(e => e.Name.LocalName.Contains("Optimize")).Remove();
             }
 
             if (definition.Type == ApplicationType.Unknown)
