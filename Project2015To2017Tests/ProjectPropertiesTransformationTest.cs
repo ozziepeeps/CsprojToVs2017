@@ -45,7 +45,42 @@ namespace Project2015To2017Tests
 			Assert.AreEqual("net46", project.TargetFrameworks[0]);
 		}
 
-		[TestMethod]
+        [TestMethod]
+        public async Task ReadsTestProjectGuid()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""14.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+  </PropertyGroup>
+ <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' "">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+</Project>";
+
+            var project = await ParseAndTransformAsync(xml).ConfigureAwait(false);
+
+            Assert.AreEqual(ApplicationType.TestProject, project.Type);
+            Assert.AreEqual("net40", project.TargetFrameworks[0]);
+        }
+
+        [TestMethod]
 		public async Task ReadsConsoleApplication()
 		{
 			var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -60,9 +95,31 @@ namespace Project2015To2017Tests
 
 			Assert.AreEqual(ApplicationType.ConsoleApplication, project.Type);
 			Assert.AreEqual("net46", project.TargetFrameworks[0]);
-		}
+        }
 
-		[TestMethod]
+        [TestMethod]
+        public async Task ReadsConsoleApplicationFromConditional()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Project ToolsVersion=""14.0"" DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
+  <PropertyGroup>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+  </PropertyGroup>  
+  <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "">
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputType>Exe</OutputType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+</Project>";
+
+            var project = await ParseAndTransformAsync(xml).ConfigureAwait(false);
+
+            Assert.AreEqual(ApplicationType.ConsoleApplication, project.Type);
+            Assert.AreEqual("net46", project.TargetFrameworks[0]);
+        }
+
+        [TestMethod]
 		public async Task ReadsClassLibraryApplication()
 		{
 			var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -235,12 +292,12 @@ namespace Project2015To2017Tests
 			var project = await ParseAndTransformAsync(xml).ConfigureAwait(false);
 
 			Assert.IsNull(project.TargetFrameworks);
-		}
+        }
 
         [TestMethod]
         public async Task ReadsPropertiesWithMultipleUnconditionalPropertyGroups()
-		{
-			var xml = @"
+        {
+            var xml = @"
 <Project DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"" ToolsVersion=""4.0"">
   <Import Project=""$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"" Condition=""Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"" />
   <PropertyGroup>
@@ -268,14 +325,57 @@ namespace Project2015To2017Tests
   </PropertyGroup>
 </Project>";
 
-			var project = await ParseAndTransformAsync(xml).ConfigureAwait(false);
+            var project = await ParseAndTransformAsync(xml).ConfigureAwait(false);
 
-			Assert.AreEqual("Croc.XFW3.DomainModelDefinitionLanguage.Dsl", project.AssemblyName);
-			Assert.AreEqual("Croc.XFW3.DomainModelDefinitionLanguage", project.RootNamespace);
-			Assert.AreEqual(ApplicationType.ClassLibrary, project.Type);
-		}
+            Assert.AreEqual("Croc.XFW3.DomainModelDefinitionLanguage.Dsl", project.AssemblyName);
+            Assert.AreEqual("Croc.XFW3.DomainModelDefinitionLanguage", project.RootNamespace);
+            Assert.AreEqual(ApplicationType.ClassLibrary, project.Type);
+        }
 
-		private static async Task<Project> ParseAndTransformAsync(string xml)
+        [TestMethod]
+        public async Task ReadsImportsAndTargets()
+        {
+            var xml = @"
+<Project DefaultTargets=""Build"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"" ToolsVersion=""4.0"">
+  <Import Project=""$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"" Condition=""Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=""'$(VisualStudioVersion)' == ''"">15.0</VisualStudioVersion>
+    <OldToolsVersion>14.0</OldToolsVersion>
+    <DslTargetsPath>..\SDK\v15.0\MSBuild\DSLTools</DslTargetsPath>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition="" '$(Configuration)' == '' "">Debug</Configuration>
+    <Platform Condition="" '$(Platform)' == '' "">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9F9AF5F0-C2CF-48B9-BF38-FEC89FDABA4A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Croc.XFW3.DomainModelDefinitionLanguage</RootNamespace>
+    <AssemblyName>Croc.XFW3.DomainModelDefinitionLanguage.Dsl</AssemblyName>
+    <SolutionDir Condition=""$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'"">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <IncludeDebugSymbolsInVSIXContainer>true</IncludeDebugSymbolsInVSIXContainer>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <RuntimeIdentifier>win7-x86</RuntimeIdentifier>
+  </PropertyGroup>
+  <Import Project=""$(MSBuildToolsPath)\Microsoft.CSharp.targets"" />
+  <Import Project=""Other"" />
+  <Target Name=""BeforeBuild"">
+  </Target>
+  <Target Name=""AfterBuild""> 
+  </Target>
+ </Project>";
+
+            var project = await ParseAndTransformAsync(xml).ConfigureAwait(false);
+
+            Assert.AreEqual(1, project.Imports.Count);
+            Assert.AreEqual(2, project.Targets.Count);
+        }
+
+        private static async Task<Project> ParseAndTransformAsync(string xml)
 		{
 			var document = XDocument.Parse(xml);
 

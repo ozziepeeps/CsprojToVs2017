@@ -14,8 +14,8 @@ namespace Project2015To2017
             XNamespace nsSys = "http://schemas.microsoft.com/developer/msbuild/2003";
             var propertyGroups = projectFile.Element(nsSys + "Project").Elements(nsSys + "PropertyGroup");
 
-			var unconditionalPropertyGroups = propertyGroups.Where(x => x.Attribute("Condition") == null);
-			if (unconditionalPropertyGroups == null)
+			var unconditionalPropertyGroups = propertyGroups.Where(x => x.Attribute("Condition") == null).ToArray();
+			if (unconditionalPropertyGroups.Length == 0)
 			{
 				throw new NotSupportedException("No unconditional property group found. Cannot determine important properties like target framework and others.");
 			}
@@ -29,9 +29,22 @@ namespace Project2015To2017
 
 				definition.RootNamespace = unconditionalPropertyGroups.Elements(nsSys + "RootNamespace").FirstOrDefault()?.Value;
 				definition.AssemblyName = unconditionalPropertyGroups.Elements(nsSys + "AssemblyName").FirstOrDefault()?.Value;
-				definition.Type = unconditionalPropertyGroups.Elements(nsSys + "TestProjectType").Any()
-					? ApplicationType.TestProject
-					: ToApplicationType(unconditionalPropertyGroups.Elements(nsSys + "OutputType").FirstOrDefault()?.Value);
+
+                definition.SignAssembly = "true".Equals(unconditionalPropertyGroups.Elements(nsSys + "SignAssembly").FirstOrDefault()?.Value, StringComparison.OrdinalIgnoreCase);
+                definition.AssemblyOriginatorKeyFile = unconditionalPropertyGroups.Elements(nsSys + "AssemblyOriginatorKeyFile").FirstOrDefault()?.Value;
+
+                // Ref.: https://www.codeproject.com/Reference/720512/List-of-Visual-Studio-Project-Type-GUIDs
+                if (unconditionalPropertyGroups.Elements(nsSys + "TestProjectType").Any() || 
+                    unconditionalPropertyGroups.Elements(nsSys + "ProjectTypeGuids").Any(e => e.Value.IndexOf("3AC096D0-A1C2-E12C-1390-A8335801FDAB", StringComparison.OrdinalIgnoreCase) > -1))
+                {
+                    definition.Type = ApplicationType.TestProject;
+                }
+                else
+                {
+                    definition.Type = ToApplicationType(unconditionalPropertyGroups.Elements(nsSys + "OutputType").FirstOrDefault()?.Value ??
+                        propertyGroups.Elements(nsSys + "OutputType").FirstOrDefault()?.Value);
+                }
+
 				if (targetFramework != null)
 				{
 					definition.TargetFrameworks = new[] { ToTargetFramework(targetFramework) };
@@ -39,6 +52,10 @@ namespace Project2015To2017
 			}
 
             definition.ConditionalPropertyGroups = propertyGroups.Where(x => x.Attribute("Condition") != null).ToArray();
+            definition.Imports = projectFile.Element(nsSys + "Project").Elements(nsSys + "Import").Where(x => 
+                    x.Attribute("Project")?.Value != @"$(MSBuildToolsPath)\Microsoft.CSharp.targets" &&
+                    x.Attribute("Project")?.Value != @"$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props").ToArray();
+            definition.Targets = projectFile.Element(nsSys + "Project").Elements(nsSys + "Target").ToArray();
 
             if (definition.Type == ApplicationType.Unknown)
             {

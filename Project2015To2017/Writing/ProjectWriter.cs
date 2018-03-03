@@ -31,6 +31,22 @@ namespace Project2015To2017.Writing
                 projectNode.Add(project.ConditionalPropertyGroups.Select(RemoveAllNamespaces));
             }
 
+            if (project.Imports != null)
+            {
+                foreach (var import in project.Imports)
+                {
+                    projectNode.Add(import);
+                }
+            }
+
+            if (project.Targets != null)
+            {
+                foreach (var target in project.Targets)
+                {
+                    projectNode.Add(target);
+                }
+            }
+
             if (project.ProjectReferences?.Count > 0)
             {
                 var itemGroup = new XElement("ItemGroup");
@@ -155,6 +171,8 @@ namespace Project2015To2017.Writing
             AddIfNotNull(mainPropertyGroup, "RootNamespace", project.RootNamespace != Path.GetFileNameWithoutExtension(outputFile.Name) ? project.RootNamespace : null);
             AddIfNotNull(mainPropertyGroup, "AssemblyName", project.AssemblyName != Path.GetFileNameWithoutExtension(outputFile.Name) ? project.AssemblyName : null);
             AddIfNotNull(mainPropertyGroup, "AllowUnsafeBlocks", project.AllowUnsafeBlocks ? "true" : null);
+            AddIfNotNull(mainPropertyGroup, "SignAssembly", project.SignAssembly ? "true" : null);
+            AddIfNotNull(mainPropertyGroup, "AssemblyOriginatorKeyFile", project.AssemblyOriginatorKeyFile);
 
             switch (project.Type)
             {
@@ -179,7 +197,7 @@ namespace Project2015To2017.Writing
                 return;
             }
 
-            AddIfNotNull(mainPropertyGroup, "Company", attributes.Company);
+            AddIfNotNull(mainPropertyGroup, "Company", attributes?.Company);
             AddIfNotNull(mainPropertyGroup, "Authors", packageConfiguration.Authors);
             AddIfNotNull(mainPropertyGroup, "Copyright", packageConfiguration.Copyright);
             AddIfNotNull(mainPropertyGroup, "Description", packageConfiguration.Description);

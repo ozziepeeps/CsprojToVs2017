@@ -45,9 +45,9 @@ namespace Project2015To2017
         }
 
         private static IReadOnlyList<XElement> FindNonWildcardMatchedFiles(
-            DirectoryInfo projectFolder, 
-            IEnumerable<XElement> itemGroups, 
-            string wildcard, 
+            DirectoryInfo projectFolder,
+            IEnumerable<XElement> itemGroups,
+            string wildcard,
             XName elementName)
         {
             var manualIncludes = new List<XElement>();
@@ -55,7 +55,7 @@ namespace Project2015To2017
             foreach (var compiledFile in itemGroups.Elements(elementName))
             {
                 var includeAttribute = compiledFile.Attribute("Include");
-                if (includeAttribute != null)
+                if (includeAttribute != null && !includeAttribute.Value.Contains("*"))
                 {
                     if (!Path.GetFullPath(Path.Combine(projectFolder.FullName, includeAttribute.Value)).StartsWith(projectFolder.FullName))
                     {
@@ -93,16 +93,16 @@ namespace Project2015To2017
                 }
                 else
                 {
-                    Console.WriteLine($"Compile found with no include, full node {compiledFile}.");
+                    Console.WriteLine($"Compile found with no or wildcard include, full node {compiledFile}.");
                 }
             }
 
-            var filesInFolder = projectFolder.EnumerateFiles(wildcard, SearchOption.AllDirectories).Select(x => x.FullName).ToArray();
+            var filesInFolder = projectFolder.EnumerateFiles(wildcard, SearchOption.AllDirectories).Select(x => x.FullName.ToUpper()).ToArray();
             var knownFullPaths = manualIncludes
                 .Select(x => x.Attribute("Include")?.Value)
                 .Where(x => x != null)
                 .Concat(filesMatchingWildcard)
-                .Select(x => Path.GetFullPath(Path.Combine(projectFolder.FullName, x)))
+                .Select(x => Path.GetFullPath(Path.Combine(projectFolder.FullName, x)).ToUpper())
                 .ToArray();
 
             foreach (var nonListedFile in filesInFolder.Except(knownFullPaths))
